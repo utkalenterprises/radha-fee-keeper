@@ -27,6 +27,7 @@ export interface Reminder {
   message: string;
   status: 'pending' | 'sent' | 'failed';
   sentDate?: Date;
+  createdAt: Date; // Added the createdAt field to the Reminder interface
 }
 
 export interface CollectionSummary {
