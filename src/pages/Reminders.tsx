@@ -53,7 +53,7 @@ const Reminders: React.FC = () => {
     setIsReminderFormOpen(true);
   };
 
-  const handleReminderSuccess = () => {
+  const handleReminderSuccess = (reminderData?: { memberId: string; message: string; dueDate: Date }) => {
     setIsReminderFormOpen(false);
     toast({
       title: "Reminder Sent",

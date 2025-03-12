@@ -48,7 +48,7 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onCollect, onRemind }) 
     onCollect(member.id);
   };
 
-  const handleReminderSuccess = () => {
+  const handleReminderSuccess = (reminderData?: { memberId: string; message: string; dueDate: Date }) => {
     setIsReminderFormOpen(false);
     toast({
       title: "Reminder Sent",

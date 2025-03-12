@@ -27,22 +27,20 @@ const RemindersList: React.FC<RemindersListProps> = ({ members }) => {
     setIsReminderFormOpen(true);
   };
 
-  const handleReminderSuccess = () => {
-    // Create a mock reminder based on the selected member
-    if (selectedMemberId) {
-      const selectedMember = members.find(m => m.id === selectedMemberId);
-      if (selectedMember) {
-        const newReminder: Reminder = {
-          id: uuidv4(),
-          memberId: selectedMemberId,
-          message: `Payment reminder for ₹${selectedMember.subscriptionAmount}`,
-          dueDate: new Date(),
-          status: 'sent',
-          createdAt: new Date()
-        };
-        
-        setReminders([...reminders, newReminder]);
-      }
+  const handleReminderSuccess = (reminderData?: { memberId: string; message: string; dueDate: Date }) => {
+    // Create a reminder based on the form data or selected member
+    if (reminderData) {
+      const newReminder: Reminder = {
+        id: uuidv4(),
+        memberId: reminderData.memberId,
+        message: reminderData.message,
+        dueDate: reminderData.dueDate,
+        status: 'sent',
+        sentDate: new Date(),
+        createdAt: new Date()
+      };
+      
+      setReminders([...reminders, newReminder]);
     }
     
     setIsReminderFormOpen(false);

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 interface ReminderFormProps {
   members: Member[];
   selectedMemberId?: string;
-  onSuccess: () => void;
+  onSuccess: (reminderData?: { memberId: string; message: string; dueDate: Date }) => void;
 }
 
 const reminderTemplates = [
@@ -84,7 +83,17 @@ const ReminderForm: React.FC<ReminderFormProps> = ({ members, selectedMemberId, 
       });
       
       setIsSubmitting(false);
-      onSuccess();
+      
+      // Pass the reminder data to the parent component
+      if (memberId && dueDate) {
+        onSuccess({
+          memberId,
+          message,
+          dueDate
+        });
+      } else {
+        onSuccess();
+      }
     }, 1500);
   };
 
@@ -221,7 +230,7 @@ const ReminderForm: React.FC<ReminderFormProps> = ({ members, selectedMemberId, 
         </form>
       </CardContent>
       <CardFooter className="flex justify-between border-t border-border/30 pt-4">
-        <Button variant="outline" onClick={onSuccess}>
+        <Button variant="outline" onClick={() => onSuccess()}>
           Cancel
         </Button>
         <Button disabled={isSubmitting} onClick={handleSubmit}>
