@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import ReminderForm from './ReminderForm';
+import { v4 as uuidv4 } from 'uuid';
 
 interface RemindersListProps {
   members: Member[];
@@ -26,8 +27,24 @@ const RemindersList: React.FC<RemindersListProps> = ({ members }) => {
     setIsReminderFormOpen(true);
   };
 
-  const handleReminderSuccess = (newReminder: Reminder) => {
-    setReminders([...reminders, newReminder]);
+  const handleReminderSuccess = () => {
+    // Create a mock reminder based on the selected member
+    if (selectedMemberId) {
+      const selectedMember = members.find(m => m.id === selectedMemberId);
+      if (selectedMember) {
+        const newReminder: Reminder = {
+          id: uuidv4(),
+          memberId: selectedMemberId,
+          message: `Payment reminder for ₹${selectedMember.subscriptionAmount}`,
+          dueDate: new Date(),
+          status: 'sent',
+          createdAt: new Date()
+        };
+        
+        setReminders([...reminders, newReminder]);
+      }
+    }
+    
     setIsReminderFormOpen(false);
     
     toast({
