@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import MemberList from '@/components/members/MemberList';
@@ -8,47 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-// Sample data
-const sampleMembers: Member[] = [
-  {
-    id: '1',
-    name: 'Amit Sharma',
-    phone: '9876543210',
-    email: 'amit.sharma@example.com',
-    address: '123 Main Street, Delhi',
-    joinDate: new Date(2022, 3, 15),
-    subscriptionAmount: 1000,
-    status: 'active',
-  },
-  {
-    id: '2',
-    name: 'Priya Patel',
-    phone: '8765432109',
-    email: 'priya.patel@example.com',
-    address: '456 Park Avenue, Mumbai',
-    joinDate: new Date(2022, 5, 10),
-    subscriptionAmount: 500,
-    status: 'active',
-  },
-  {
-    id: '3',
-    name: 'Rahul Singh',
-    phone: '7654321098',
-    email: 'rahul.singh@example.com',
-    address: '789 Gandhi Road, Kolkata',
-    joinDate: new Date(2022, 7, 22),
-    subscriptionAmount: 750,
-    status: 'inactive',
-  },
-];
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getMembers, addMember } from '@/services/firebase-service';
 
 const Members: React.FC = () => {
   const { toast } = useToast();
-  const [members, setMembers] = useState<Member[]>(sampleMembers);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newMember, setNewMember] = useState<Partial<Member>>({
     name: '',
@@ -58,38 +22,65 @@ const Members: React.FC = () => {
     subscriptionAmount: 500,
     status: 'active',
   });
+  const queryClient = useQueryClient();
+
+  // Fetch members
+  const { data: members = [] } = useQuery({
+    queryKey: ['members'],
+    queryFn: getMembers
+  });
 
   const handleAddMember = () => {
     setIsDialogOpen(true);
   };
 
-  const handleCreateMember = () => {
-    const member: Member = {
-      id: uuidv4(),
-      name: newMember.name || '',
-      phone: newMember.phone || '',
+  const handleCreateMember = async () => {
+    if (!newMember.name || !newMember.phone || !newMember.address) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const member: Omit<Member, 'id' | 'joinDate'> = {
+      name: newMember.name,
+      phone: newMember.phone,
       email: newMember.email,
       address: newMember.address || '',
-      joinDate: new Date(),
       subscriptionAmount: newMember.subscriptionAmount || 500,
       status: newMember.status as 'active' | 'inactive' || 'active',
     };
 
-    setMembers([member, ...members]);
-    setIsDialogOpen(false);
-    setNewMember({
-      name: '',
-      phone: '',
-      email: '',
-      address: '',
-      subscriptionAmount: 500,
-      status: 'active',
-    });
+    try {
+      await addMember(member);
+      
+      // Invalidate the members query to refetch the data
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+      
+      setIsDialogOpen(false);
+      setNewMember({
+        name: '',
+        phone: '',
+        email: '',
+        address: '',
+        subscriptionAmount: 500,
+        status: 'active',
+      });
 
-    toast({
-      title: "Member Added",
-      description: `${member.name} has been added successfully.`,
-    });
+      toast({
+        title: "Member Added",
+        description: `${member.name} has been added successfully.`,
+      });
+    } catch (error) {
+      console.error("Error adding member:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add member. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

@@ -1,64 +1,69 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bell } from 'lucide-react';
-import { Member } from '@/types';
+import { Member, Reminder } from '@/types';
 import RemindersList from '@/components/reminders/RemindersList';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { useState } from 'react';
 import ReminderForm from '@/components/reminders/ReminderForm';
 import { useToast } from '@/hooks/use-toast';
-
-// Sample data for members
-const sampleMembers: Member[] = [
-  {
-    id: '1',
-    name: 'Amit Sharma',
-    phone: '9876543210',
-    email: 'amit.sharma@example.com',
-    address: '123 Main Street, Delhi',
-    joinDate: new Date(2022, 3, 15),
-    subscriptionAmount: 1000,
-    status: 'active',
-  },
-  {
-    id: '2',
-    name: 'Priya Patel',
-    phone: '8765432109',
-    email: 'priya.patel@example.com',
-    address: '456 Park Avenue, Mumbai',
-    joinDate: new Date(2022, 5, 10),
-    subscriptionAmount: 500,
-    status: 'active',
-  },
-  {
-    id: '3',
-    name: 'Rahul Singh',
-    phone: '7654321098',
-    email: 'rahul.singh@example.com',
-    address: '789 Gandhi Road, Kolkata',
-    joinDate: new Date(2022, 7, 22),
-    subscriptionAmount: 750,
-    status: 'inactive',
-  },
-];
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getMembers, addReminder, getReminders } from '@/services/firebase-service';
 
 const Reminders: React.FC = () => {
   const [isReminderFormOpen, setIsReminderFormOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch members
+  const { data: members = [] } = useQuery({
+    queryKey: ['members'],
+    queryFn: getMembers
+  });
+
+  // Fetch reminders
+  const { data: reminders = [] } = useQuery({
+    queryKey: ['reminders'],
+    queryFn: getReminders
+  });
 
   const handleNewReminder = () => {
     setIsReminderFormOpen(true);
   };
 
-  const handleReminderSuccess = (reminderData?: { memberId: string; message: string; dueDate: Date }) => {
+  const handleReminderSuccess = async (reminderData?: { memberId: string; message: string; dueDate: Date }) => {
+    if (reminderData) {
+      try {
+        const newReminder = {
+          memberId: reminderData.memberId,
+          message: reminderData.message,
+          dueDate: reminderData.dueDate,
+          status: 'sent' as const,
+          sentDate: new Date(),
+        };
+        
+        await addReminder(newReminder);
+        
+        // Invalidate the reminders query to refetch the data
+        queryClient.invalidateQueries({ queryKey: ['reminders'] });
+        
+        toast({
+          title: "Reminder Sent",
+          description: "The reminder has been sent successfully.",
+        });
+      } catch (error) {
+        console.error("Error sending reminder:", error);
+        toast({
+          title: "Error",
+          description: "Failed to send reminder. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+    
     setIsReminderFormOpen(false);
-    toast({
-      title: "Reminder Sent",
-      description: "The reminder has been sent successfully.",
-    });
   };
 
   return (
@@ -77,12 +82,12 @@ const Reminders: React.FC = () => {
           </Button>
         </section>
 
-        <RemindersList members={sampleMembers} />
+        <RemindersList members={members} reminders={reminders} />
 
         <Dialog open={isReminderFormOpen} onOpenChange={setIsReminderFormOpen}>
           <DialogContent className="sm:max-w-lg">
             <ReminderForm 
-              members={sampleMembers}
+              members={members}
               onSuccess={handleReminderSuccess}
             />
           </DialogContent>

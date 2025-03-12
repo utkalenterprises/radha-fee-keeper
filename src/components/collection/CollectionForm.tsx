@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,7 +16,14 @@ import { Member } from '@/types';
 interface CollectionFormProps {
   members: Member[];
   selectedMemberId?: string;
-  onSuccess: () => void;
+  onSuccess: (paymentData?: { 
+    memberId: string;
+    amount: number;
+    date: Date;
+    paymentMethod: 'cash' | 'online' | 'other';
+    collectedBy: string;
+    remarks?: string;
+  }) => void;
 }
 
 const CollectionForm: React.FC<CollectionFormProps> = ({ members, selectedMemberId, onSuccess }) => {
@@ -32,27 +38,31 @@ const CollectionForm: React.FC<CollectionFormProps> = ({ members, selectedMember
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!memberId || !amount || !date || !collectedBy) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      console.log({
-        memberId,
-        amount,
-        date,
-        paymentMethod,
-        collectedBy,
-        remarks
-      });
-      
-      toast({
-        title: "Payment Recorded",
-        description: "The payment has been successfully recorded.",
-      });
-      
-      setIsSubmitting(false);
-      onSuccess();
-    }, 1000);
+    // Prepare payment data
+    const paymentData = {
+      memberId,
+      amount: Number(amount),
+      date: date as Date,
+      paymentMethod: paymentMethod as 'cash' | 'online' | 'other',
+      collectedBy,
+      remarks: remarks || undefined
+    };
+    
+    // Call the onSuccess callback with the payment data
+    onSuccess(paymentData);
+    setIsSubmitting(false);
   };
 
   const selectedMember = members.find(m => m.id === memberId);
@@ -186,7 +196,7 @@ const CollectionForm: React.FC<CollectionFormProps> = ({ members, selectedMember
         </form>
       </CardContent>
       <CardFooter className="flex justify-between border-t border-border/30 pt-4">
-        <Button variant="outline" onClick={onSuccess}>
+        <Button variant="outline" onClick={() => onSuccess()}>
           Cancel
         </Button>
         <Button disabled={isSubmitting} onClick={handleSubmit}>

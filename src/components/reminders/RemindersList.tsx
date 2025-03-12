@@ -10,45 +10,56 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import ReminderForm from './ReminderForm';
-import { v4 as uuidv4 } from 'uuid';
+import { useQueryClient } from '@tanstack/react-query';
+import { addReminder } from '@/services/firebase-service';
 
 interface RemindersListProps {
   members: Member[];
+  reminders: Reminder[];
 }
 
-const RemindersList: React.FC<RemindersListProps> = ({ members }) => {
+const RemindersList: React.FC<RemindersListProps> = ({ members, reminders }) => {
   const { toast } = useToast();
-  const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isReminderFormOpen, setIsReminderFormOpen] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string | undefined>(undefined);
+  const queryClient = useQueryClient();
 
   const handleSendReminder = (memberId?: string) => {
     setSelectedMemberId(memberId);
     setIsReminderFormOpen(true);
   };
 
-  const handleReminderSuccess = (reminderData?: { memberId: string; message: string; dueDate: Date }) => {
-    // Create a reminder based on the form data or selected member
+  const handleReminderSuccess = async (reminderData?: { memberId: string; message: string; dueDate: Date }) => {
     if (reminderData) {
-      const newReminder: Reminder = {
-        id: uuidv4(),
-        memberId: reminderData.memberId,
-        message: reminderData.message,
-        dueDate: reminderData.dueDate,
-        status: 'sent',
-        sentDate: new Date(),
-        createdAt: new Date()
-      };
-      
-      setReminders([...reminders, newReminder]);
+      try {
+        const newReminder = {
+          memberId: reminderData.memberId,
+          message: reminderData.message,
+          dueDate: reminderData.dueDate,
+          status: 'sent' as const,
+          sentDate: new Date(),
+        };
+        
+        await addReminder(newReminder);
+        
+        // Invalidate the reminders query to refetch the data
+        queryClient.invalidateQueries({ queryKey: ['reminders'] });
+        
+        toast({
+          title: "Reminder Sent",
+          description: "The reminder has been sent successfully.",
+        });
+      } catch (error) {
+        console.error("Error sending reminder:", error);
+        toast({
+          title: "Error",
+          description: "Failed to send reminder. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
     
     setIsReminderFormOpen(false);
-    
-    toast({
-      title: "Reminder Sent",
-      description: "The reminder has been sent successfully.",
-    });
   };
 
   return (
@@ -67,7 +78,7 @@ const RemindersList: React.FC<RemindersListProps> = ({ members }) => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-medium">{member?.name}</h3>
+                          <h3 className="font-medium">{member?.name || "Unknown Member"}</h3>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Calendar className="h-4 w-4" />
                             <span>Due: {format(reminder.dueDate, 'PPP')}</span>

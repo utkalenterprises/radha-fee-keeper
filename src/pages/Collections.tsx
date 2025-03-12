@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -6,94 +5,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Member, Payment } from '@/types';
 import { format } from 'date-fns';
 import { Search, Download, Plus, IndianRupee, Calendar, User } from 'lucide-react';
 import CollectionForm from '@/components/collection/CollectionForm';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-// Sample data
-const sampleMembers: Member[] = [
-  {
-    id: '1',
-    name: 'Amit Sharma',
-    phone: '9876543210',
-    email: 'amit.sharma@example.com',
-    address: '123 Main Street, Delhi',
-    joinDate: new Date(2022, 3, 15),
-    subscriptionAmount: 1000,
-    status: 'active',
-  },
-  {
-    id: '2',
-    name: 'Priya Patel',
-    phone: '8765432109',
-    email: 'priya.patel@example.com',
-    address: '456 Park Avenue, Mumbai',
-    joinDate: new Date(2022, 5, 10),
-    subscriptionAmount: 500,
-    status: 'active',
-  },
-  {
-    id: '3',
-    name: 'Rahul Singh',
-    phone: '7654321098',
-    email: 'rahul.singh@example.com',
-    address: '789 Gandhi Road, Kolkata',
-    joinDate: new Date(2022, 7, 22),
-    subscriptionAmount: 750,
-    status: 'inactive',
-  },
-];
-
-const samplePayments: (Payment & { memberName: string })[] = [
-  { 
-    id: 'p1', 
-    memberId: '1', 
-    memberName: 'Amit Sharma',
-    amount: 1000, 
-    date: new Date(2023, 5, 15), 
-    collectedBy: 'Rajesh Kumar', 
-    paymentMethod: 'cash' 
-  },
-  { 
-    id: 'p2', 
-    memberId: '2', 
-    memberName: 'Priya Patel',
-    amount: 500, 
-    date: new Date(2023, 5, 20), 
-    collectedBy: 'Sanjay Gupta', 
-    paymentMethod: 'online' 
-  },
-  { 
-    id: 'p3', 
-    memberId: '1', 
-    memberName: 'Amit Sharma',
-    amount: 1000, 
-    date: new Date(2023, 4, 15), 
-    collectedBy: 'Rajesh Kumar', 
-    paymentMethod: 'cash' 
-  },
-  { 
-    id: 'p4', 
-    memberId: '3', 
-    memberName: 'Rahul Singh',
-    amount: 750, 
-    date: new Date(2023, 4, 22), 
-    collectedBy: 'Rajesh Kumar', 
-    paymentMethod: 'cash',
-    remarks: 'Paid for two months in advance'
-  },
-];
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getMembers, getPayments, addPayment } from '@/services/firebase-service';
+import { useToast } from '@/hooks/use-toast';
 
 const Collections: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [payments, setPayments] = useState(samplePayments);
   const [isCollectionFormOpen, setIsCollectionFormOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<string | undefined>(undefined);
   const [monthFilter, setMonthFilter] = useState('all');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['members'],
+    queryFn: getMembers
+  });
+
+  const { data: payments = [] } = useQuery({
+    queryKey: ['payments'],
+    queryFn: getPayments
+  });
 
   const filteredPayments = payments.filter(payment => {
     const matchesSearch = 
@@ -119,7 +57,34 @@ const Collections: React.FC = () => {
     setIsCollectionFormOpen(true);
   };
 
-  const handleCollectionSuccess = () => {
+  const handleCollectionSuccess = async (paymentData?: { 
+    memberId: string;
+    amount: number;
+    date: Date;
+    paymentMethod: 'cash' | 'online' | 'other';
+    collectedBy: string;
+    remarks?: string;
+  }) => {
+    if (paymentData) {
+      try {
+        await addPayment(paymentData);
+        
+        queryClient.invalidateQueries({ queryKey: ['payments'] });
+        
+        toast({
+          title: "Payment Recorded",
+          description: "The payment has been successfully recorded.",
+        });
+      } catch (error) {
+        console.error("Error recording payment:", error);
+        toast({
+          title: "Error",
+          description: "Failed to record payment. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+    
     setIsCollectionFormOpen(false);
   };
 
@@ -367,7 +332,7 @@ const Collections: React.FC = () => {
       <Dialog open={isCollectionFormOpen} onOpenChange={setIsCollectionFormOpen}>
         <DialogContent className="sm:max-w-lg">
           <CollectionForm 
-            members={sampleMembers}
+            members={members}
             selectedMemberId={selectedMember}
             onSuccess={handleCollectionSuccess}
           />
@@ -378,3 +343,7 @@ const Collections: React.FC = () => {
 };
 
 export default Collections;
+
+
+
+
