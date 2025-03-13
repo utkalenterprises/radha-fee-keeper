@@ -38,7 +38,7 @@ const RemindersList: React.FC<RemindersListProps> = ({ members, reminders }) => 
           dueDate: reminderData.dueDate,
           status: 'sent' as const,
           sentDate: new Date(),
-          createdAt: new Date(), // Add createdAt field
+          createdAt: new Date(), // Make sure to include createdAt
         };
         
         await addReminder(newReminder);

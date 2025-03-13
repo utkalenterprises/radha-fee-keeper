@@ -1,4 +1,144 @@
 
+import { collection, addDoc, getDocs, query, where, orderBy, Timestamp, DocumentData } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Member, Payment, Reminder } from '@/types';
+import { format } from 'date-fns';
+
+// Collection references
+const membersCollection = collection(db, 'members');
+const paymentsCollection = collection(db, 'payments');
+const remindersCollection = collection(db, 'reminders');
+
+// Convert Firestore timestamp to Date
+const convertTimestampToDate = (data: DocumentData): any => {
+  const result: any = { ...data };
+  
+  // Convert timestamp fields to Date objects
+  Object.keys(result).forEach(key => {
+    if (result[key] instanceof Timestamp) {
+      result[key] = result[key].toDate();
+    }
+  });
+  
+  return result;
+};
+
+// Convert Date to Firestore timestamp
+const convertDateToTimestamp = (data: any): any => {
+  const result: any = { ...data };
+  
+  // Convert Date objects to Firestore timestamps
+  Object.keys(result).forEach(key => {
+    if (result[key] instanceof Date) {
+      result[key] = Timestamp.fromDate(result[key]);
+    }
+  });
+  
+  return result;
+};
+
+// MEMBERS
+export const getMembers = async (): Promise<Member[]> => {
+  try {
+    const snapshot = await getDocs(query(membersCollection, orderBy('name')));
+    const members: Member[] = [];
+    
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      members.push({
+        id: doc.id,
+        ...convertTimestampToDate(data)
+      } as Member);
+    });
+    
+    return members;
+  } catch (error) {
+    console.error('Error getting members:', error);
+    return [];
+  }
+};
+
+export const addMember = async (member: Omit<Member, 'id'>): Promise<string> => {
+  try {
+    // Convert Date objects to Firestore timestamps
+    const memberData = convertDateToTimestamp(member);
+    
+    const docRef = await addDoc(membersCollection, memberData);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding member:', error);
+    throw error;
+  }
+};
+
+// PAYMENTS
+export const getPayments = async (): Promise<Payment[]> => {
+  try {
+    const snapshot = await getDocs(query(paymentsCollection, orderBy('date', 'desc')));
+    const payments: Payment[] = [];
+    
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      payments.push({
+        id: doc.id,
+        ...convertTimestampToDate(data)
+      } as Payment);
+    });
+    
+    return payments;
+  } catch (error) {
+    console.error('Error getting payments:', error);
+    return [];
+  }
+};
+
+export const addPayment = async (payment: Omit<Payment, 'id'>): Promise<string> => {
+  try {
+    // Convert Date objects to Firestore timestamps
+    const paymentData = convertDateToTimestamp(payment);
+    
+    const docRef = await addDoc(paymentsCollection, paymentData);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding payment:', error);
+    throw error;
+  }
+};
+
+// REMINDERS
+export const getReminders = async (): Promise<Reminder[]> => {
+  try {
+    const snapshot = await getDocs(query(remindersCollection, orderBy('createdAt', 'desc')));
+    const reminders: Reminder[] = [];
+    
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      reminders.push({
+        id: doc.id,
+        ...convertTimestampToDate(data)
+      } as Reminder);
+    });
+    
+    return reminders;
+  } catch (error) {
+    console.error('Error getting reminders:', error);
+    return [];
+  }
+};
+
+export const addReminder = async (reminder: Omit<Reminder, 'id'>): Promise<string> => {
+  try {
+    // Convert Date objects to Firestore timestamps
+    const reminderData = convertDateToTimestamp(reminder);
+    
+    const docRef = await addDoc(remindersCollection, reminderData);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding reminder:', error);
+    throw error;
+  }
+};
+
 // Seed initial data for testing
 export const seedInitialData = async (): Promise<void> => {
   // Check if we already have data
