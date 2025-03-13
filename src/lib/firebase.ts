@@ -3,14 +3,14 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
-// Replace these with your actual Firebase config values from the Firebase console
 const firebaseConfig = {
-  apiKey: "AIzaSyA_pl-nvDf9LhGEcB3lNmDF4XWuUTihX9E",
-  authDomain: "member-management-demo.firebaseapp.com",
-  projectId: "member-management-demo",
-  storageBucket: "member-management-demo.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:1234567890abcdef"
+  apiKey: "AIzaSyDlJoYEYdsZhfH2KZAuluFjYUurxEaluQU",
+  authDomain: "rahasa-mandir.firebaseapp.com",
+  projectId: "rahasa-mandir",
+  storageBucket: "rahasa-mandir.firebasestorage.app",
+  messagingSenderId: "97625836782",
+  appId: "1:97625836782:web:5eb0ad8aba1a54fad7f7ff",
+  measurementId: "G-WZNB87F91V"
 };
 
 // Initialize Firebase

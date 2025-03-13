@@ -44,7 +44,7 @@ const Members: React.FC = () => {
       return;
     }
 
-    const member: Omit<Member, 'id' | 'joinDate'> = {
+    const member: Omit<Member, 'joinDate'> = {
       name: newMember.name,
       phone: newMember.phone,
       email: newMember.email,
