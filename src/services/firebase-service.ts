@@ -1,3 +1,4 @@
+
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where, Timestamp, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Member, Payment, Reminder } from '@/types';
@@ -13,7 +14,7 @@ export const getMembers = async (): Promise<Member[]> => {
   return snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
-    joinDate: doc.data().joinDate?.toDate() || null,
+    joinDate: doc.data().joinDate?.toDate() || new Date(),
   } as Member));
 };
 
@@ -26,7 +27,7 @@ export const getMember = async (id: string): Promise<Member | null> => {
     return {
       id: docSnap.id,
       ...data,
-      joinDate: data.joinDate?.toDate() || null,
+      joinDate: data.joinDate?.toDate() || new Date(),
     } as Member;
   }
   
@@ -34,11 +35,14 @@ export const getMember = async (id: string): Promise<Member | null> => {
 };
 
 export const addMember = async (member: Omit<Member, 'id'>): Promise<string> => {
-  const docRef = await addDoc(membersCollection, {
+  // Convert Date objects to Firestore Timestamps
+  const memberData = {
     ...member,
     joinDate: member.joinDate ? Timestamp.fromDate(new Date(member.joinDate)) : serverTimestamp(),
     createdAt: serverTimestamp(),
-  });
+  };
+  
+  const docRef = await addDoc(membersCollection, memberData);
   return docRef.id;
 };
 
@@ -64,7 +68,7 @@ export const getPayments = async (): Promise<Payment[]> => {
   return snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
-    date: doc.data().date?.toDate() || null,
+    date: doc.data().date?.toDate() || new Date(),
   } as Payment));
 };
 
@@ -75,7 +79,7 @@ export const getPaymentsByMember = async (memberId: string): Promise<Payment[]> 
   return snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
-    date: doc.data().date?.toDate() || null,
+    date: doc.data().date?.toDate() || new Date(),
   } as Payment));
 };
 
@@ -96,8 +100,9 @@ export const getReminders = async (): Promise<Reminder[]> => {
   return snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
-    dueDate: doc.data().dueDate?.toDate() || null,
+    dueDate: doc.data().dueDate?.toDate() || new Date(),
     sentDate: doc.data().sentDate?.toDate() || null,
+    createdAt: doc.data().createdAt?.toDate() || new Date(),
   } as Reminder));
 };
 
@@ -108,8 +113,9 @@ export const getRemindersByMember = async (memberId: string): Promise<Reminder[]
   return snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
-    dueDate: doc.data().dueDate?.toDate() || null,
+    dueDate: doc.data().dueDate?.toDate() || new Date(),
     sentDate: doc.data().sentDate?.toDate() || null,
+    createdAt: doc.data().createdAt?.toDate() || new Date(),
   } as Reminder));
 };
 
@@ -117,8 +123,8 @@ export const addReminder = async (reminder: Omit<Reminder, 'id'>): Promise<strin
   const reminderData = {
     ...reminder,
     dueDate: reminder.dueDate ? Timestamp.fromDate(new Date(reminder.dueDate)) : null,
-    sentDate: reminder.sentDate ? Timestamp.fromDate(new Date(reminder.sentDate)) : serverTimestamp(),
-    createdAt: serverTimestamp(),
+    sentDate: reminder.sentDate ? Timestamp.fromDate(new Date(reminder.sentDate)) : null,
+    createdAt: reminder.createdAt ? Timestamp.fromDate(new Date(reminder.createdAt)) : serverTimestamp(),
   };
   
   const docRef = await addDoc(remindersCollection, reminderData);

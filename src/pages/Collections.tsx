@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getMembers, getPayments, addPayment } from '@/services/firebase-service';
 import { useToast } from '@/hooks/use-toast';
 
+// Create an extended payment type for display purposes
+interface PaymentWithMemberName extends Payment {
+  memberName: string;
+}
+
 const Collections: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCollectionFormOpen, setIsCollectionFormOpen] = useState(false);
@@ -28,9 +34,18 @@ const Collections: React.FC = () => {
     queryFn: getMembers
   });
 
-  const { data: payments = [] } = useQuery({
+  const { data: paymentsData = [] } = useQuery({
     queryKey: ['payments'],
     queryFn: getPayments
+  });
+
+  // Add member names to payments
+  const payments: PaymentWithMemberName[] = paymentsData.map(payment => {
+    const member = members.find(m => m.id === payment.memberId);
+    return {
+      ...payment,
+      memberName: member?.name || "Unknown Member"
+    };
   });
 
   const filteredPayments = payments.filter(payment => {
@@ -343,7 +358,3 @@ const Collections: React.FC = () => {
 };
 
 export default Collections;
-
-
-
-

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import MemberList from '@/components/members/MemberList';
@@ -44,16 +45,18 @@ const Members: React.FC = () => {
       return;
     }
 
-    const member: Omit<Member, 'joinDate'> = {
-      name: newMember.name,
-      phone: newMember.phone,
-      email: newMember.email,
-      address: newMember.address || '',
-      subscriptionAmount: newMember.subscriptionAmount || 500,
-      status: newMember.status as 'active' | 'inactive' || 'active',
-    };
-
     try {
+      // Create a proper member object with required fields
+      const member = {
+        name: newMember.name,
+        phone: newMember.phone,
+        email: newMember.email,
+        address: newMember.address || '',
+        subscriptionAmount: newMember.subscriptionAmount || 500,
+        status: newMember.status as 'active' | 'inactive' || 'active',
+        joinDate: new Date(), // Add joinDate which is required
+      };
+      
       await addMember(member);
       
       // Invalidate the members query to refetch the data
