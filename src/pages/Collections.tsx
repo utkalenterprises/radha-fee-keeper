@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getMembers, getPayments, addPayment } from '@/services/firebase-service';
 import { useToast } from '@/hooks/use-toast';
+import { Payment } from '@/types';
 
 // Create an extended payment type for display purposes
 interface PaymentWithMemberName extends Payment {

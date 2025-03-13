@@ -85,7 +85,7 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onCollect, onRemind }) 
           dueDate: reminderData.dueDate,
           status: 'sent' as const,
           sentDate: new Date(),
-          createdAt: new Date(), // Add createdAt field
+          createdAt: new Date(), // Added createdAt field
         };
         
         await addReminder(newReminder);
